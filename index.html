@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>思维发散度测评</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #7C9A6E;
+            --primary-light: #A8C49A;
+            --secondary: #E8DCC4;
+            --accent: #D4A574;
+            --bg: #F7F4EF;
+            --bg-card: #FFFEF9;
+            --text: #4A4A4A;
+            --text-muted: #8B8B8B;
+        }
+
+        * {
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #F7F4EF 0%, #EDE8DF 100%);
+            min-height: 100vh;
+        }
+
+        .font-display {
+            font-family: 'ZCOOL XiaoWei', serif;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(124, 154, 110, 0.1);
+            border: 1px solid rgba(124, 154, 110, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 14px 32px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(124, 154, 110, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(124, 154, 110, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .textarea-custom {
+            background: linear-gradient(135deg, #FDFCF9 0%, #F8F6F1 100%);
+            border: 2px solid var(--secondary);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            min-height: 200px;
+            font-size: 16px;
+            line-height: 1.8;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .textarea-custom:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(124, 154, 110, 0.1);
+        }
+
+        .timer-ring {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary) var(--progress, 100%), #E8E4DD var(--progress, 100%));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .timer-ring::before {
+            content: '';
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: var(--bg-card);
+        }
+
+        .timer-text {
+            position: relative;
+            z-index: 1;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .timer-warning {
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .score-display {
+            background: linear-gradient(135deg, #FFF9F0 0%, #FFF5E6 100%);
+            border: 3px solid var(--accent);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .score-number {
+            font-size: 72px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .radar-container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .dimension-tag {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 4px;
+            transition: all 0.2s;
+        }
+
+        .dimension-tag.high {
+            background: rgba(124, 154, 110, 0.15);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .dimension-tag.low {
+            background: rgba(212, 165, 116, 0.15);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        .share-btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+            font-size: 14px;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .decorative-leaf {
+            position: absolute;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #E8E4DD;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 100%);
+            transition: width 0.3s ease;
+        }
+
+        /* 宫崎骏风格装饰 */
+        .cloud-decoration {
+            position: fixed;
+            opacity: 0.08;
+            pointer-events: none;
+            z-index: 0;
+        }
+    </style>
+</head>
+<body class="text-gray-700">
+    <!-- 装饰性云朵 -->
+    <svg class="cloud-decoration top-20 left-10 w-48" viewBox="0 0 200 100" fill="#7C9A6E">
+        <ellipse cx="60" cy="60" rx="50" ry="30"/>
+        <ellipse cx="100" cy="50" rx="40" ry="35"/>
+        <ellipse cx="150" cy="60" rx="45" ry="28"/>
+    </svg>
+    <svg class="cloud-decoration top-40 right-20 w-64" viewBox="0 0 200 100" fill="#D4A574">
+        <ellipse cx="60" cy="60" rx="50" ry="30"/>
+        <ellipse cx="100" cy="50" rx="40" ry="35"/>
+        <ellipse cx="150" cy="60" rx="45" ry="28"/>
+    </svg>
+
+    <div class="relative z-10 min-h-screen py-8 px-4">
+        <div class="max-w-3xl mx-auto">
+            
+            <!-- 页面1: 介绍页 -->
+            <div id="intro-page" class="fade-in">
+                <div class="card p-8 md:p-12 text-center">
+                    <!-- Logo/标题区 -->
+                    <div class="mb-8">
+                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-[#A8C49A] to-[#7C9A6E] mb-6">
+                            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                            </svg>
+                        </div>
+                        <h1 class="font-display text-4xl md:text-5xl text-[#4A4A4A] mb-4">思维发散度测评</h1>
+                        <p class="text-[#8B8B8B] text-lg">探索你的思维边界</p>
+                    </div>
+
+                    <!-- 规则说明 -->
+                    <div class="bg-gradient-to-br from-[#FDFCF9] to-[#F8F6F1] rounded-2xl p-6 mb-8 text-left">
+                        <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-[#7C9A6E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            测评规则
+                        </h2>
+                        <ul class="space-y-3 text-[#6B6B6B]">
+                            <li class="flex items-start gap-3">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#A8C49A] text-white text-sm flex items-center justify-center mt-0.5">1</span>
+                                <span>测评仅含<strong>一道题</strong>，基于可拓学理论评估思维发散度</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#A8C49A] text-white text-sm flex items-center justify-center mt-0.5">2</span>
+                                <span>作答时间<strong>5分钟</strong>，超时将自动提交</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#A8C49A] text-white text-sm flex items-center justify-center mt-0.5">3</span>
+                                <span>每行填写<strong>一个原因</strong>，写得越多分数越高（满分360分）</span>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="flex-shrink-0 w-6 h-6 rounded-full bg-[#A8C49A] text-white text-sm flex items-center justify-center mt-0.5">4</span>
+                                <span>提交后查看五维能力分析与思维盲区识别</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- 题目预览 -->
+                    <div class="bg-[#FFF9F0] border-2 border-[#D4A574]/30 rounded-2xl p-6 mb-8 text-left">
+                        <h3 class="text-sm font-semibold text-[#D4A574] mb-3 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            测评题目（点击开始后可见完整内容）
+                        </h3>
+                        <p class="text-[#5A5A5A] text-lg leading-relaxed">
+                            一个初中生数学考试只有56分，家长却高兴地请ta吃庆丰包子，这是为什么？
+                        </p>
+                        <p class="text-[#8B8B8B] mt-3 text-sm">5分钟找出尽可能多的原因</p>
+                    </div>
+
+                    <button id="start-btn" class="btn-primary text-lg" onclick="startTest()">
+                        开始测评
+                    </button>
+
+                    <!-- 历史记录入口 -->
+                    <div class="mt-6">
+                        <button onclick="showHistory()" class="text-[#8B8B8B] hover:text-[#7C9A6E] transition-colors text-sm underline">
+                            查看我的历史记录
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面2: 答题页 -->
+            <div id="test-page" class="hidden fade-in">
+                <div class="card p-6 md:p-8">
+                    <!-- 顶部进度 -->
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-[#7C9A6E] text-white flex items-center justify-center font-semibold" id="progress-indicator">1</div>
+                            <span class="text-[#8B8B8B] text-sm">思维发散度测评</span>
+                        </div>
+                        <button onclick="confirmExit()" class="text-[#8B8B8B] hover:text-[#D4A574] transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- 计时器 -->
+                    <div class="flex justify-center mb-8">
+                        <div class="timer-ring" id="timer-ring">
+                            <span class="timer-text" id="timer-text">05:00</span>
+                        </div>
+                    </div>
+
+                    <!-- 题目 -->
+                    <div class="bg-[#FFF9F0] rounded-2xl p-6 mb-6">
+                        <p class="text-[#5A5A5A] text-lg leading-relaxed">
+                            一个初中生数学考试只有56分，家长却高兴地请ta吃庆丰包子，这是为什么？
+                        </p>
+                        <p class="text-[#D4A574] mt-3 text-sm font-medium">
+                            5分钟找出尽可能多的原因
+                        </p>
+                    </div>
+
+                    <!-- 输入区域 -->
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="text-sm font-medium text-[#6B6B6B]">你的答案（每行一个原因）</label>
+                            <span class="text-sm text-[#8B8B8B]" id="line-count">已输入 0 行</span>
+                        </div>
+                        <textarea 
+                            id="answer-input" 
+                            class="textarea-custom" 
+                            placeholder="请在此输入你的答案...
+例如：
+- 包子是孩子的最爱
+- 家长想鼓励孩子
+..."
+                            oninput="updateLineCount()"
+                        ></textarea>
+                    </div>
+
+                    <!-- 提交按钮 -->
+                    <div class="flex flex-col items-center gap-4">
+                        <button id="submit-btn" class="btn-primary w-full md:w-auto" onclick="submitAnswer()">
+                            提交答案
+                        </button>
+                        <p class="text-[#8B8B8B] text-sm">按回车键可快速换行</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 页面3: 结果页 -->
+            <div id="result-page" class="hidden fade-in">
+                <div class="card p-6 md:p-8">
+                    <!-- 标题 -->
+                    <div class="text-center mb-8">
+                        <h2 class="font-display text-3xl text-[#4A4A4A] mb-2">测评完成</h2>
+                        <p class="text-[#8B8B8B]">以下是您的思维发散度分析</p>
+                    </div>
+
+                    <!-- 分数展示 -->
+                    <div class="score-display mb-8">
+                        <p class="text-[#8B8B8B] text-sm mb-2">本次思维发散度测评分数</p>
+                        <div class="score-number" id="score-display">--</div>
+                        <p class="text-[#8B8B8B] text-sm mt-2">满分 360 分</p>
+                        <div id="answer-summary" class="mt-4 inline-flex items-center gap-2 bg-white/60 px-4 py-2 rounded-full text-sm">
+                            <svg class="w-4 h-4 text-[#7C9A6E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span id="valid-answer-count">有效回答：0 条</span>
+                        </div>
+                        <div class="mt-3 inline-flex items-center gap-2 bg-white/60 px-4 py-2 rounded-full">
+                            <svg class="w-5 h-5 text-[#7C9A6E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                            <span class="text-[#6B6B6B]" id="percentile-display">等待测评...</span>
+                        </div>
+                    </div>
+
+                    <!-- 雷达图 -->
+                    <div class="bg-gradient-to-br from-[#FDFCF9] to-[#F8F6F1] rounded-2xl p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-center mb-4">五维能力分析</h3>
+                        <div class="radar-container">
+                            <canvas id="radar-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 思维盲区分析 -->
+                    <div class="bg-gradient-to-br from-[#FFF9F0] to-[#FFF5E6] rounded-2xl p-6 mb-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-[#D4A574]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            思维盲区识别
+                        </h3>
+                        <div id="blind-spot-analysis" class="text-[#6B6B6B] leading-relaxed">
+                            <!-- 动态填充 -->
+                        </div>
+                    </div>
+
+                    <!-- 维度标签 -->
+                    <div class="mb-8">
+                        <h3 class="text-sm font-medium text-[#8B8B8B] mb-3">各维度表现</h3>
+                        <div id="dimension-tags" class="flex flex-wrap gap-2">
+                            <!-- 动态填充 -->
+                        </div>
+                    </div>
+
+                    <!-- 可拓学理论说明 -->
+                    <div class="bg-[#F8F6F1] rounded-2xl p-6 mb-8">
+                        <h3 class="text-sm font-semibold text-[#6B6B6B] mb-4">📚 评分维度说明（基于可拓学理论）</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-[#6B6B6B]">
+                            <div>
+                                <p class="font-medium text-[#7C9A6E]">基元拓展</p>
+                                <p class="text-xs mt-1">物元、事元、关系元的特征分析</p>
+                            </div>
+                            <div>
+                                <p class="font-medium text-[#7C9A6E]">共轭8部</p>
+                                <p class="text-xs mt-1">虚实、软硬、负正、潜显分析</p>
+                            </div>
+                            <div>
+                                <p class="font-medium text-[#7C9A6E]">创新路径</p>
+                                <p class="text-xs mt-1">相关、蕴含、可扩路径</p>
+                            </div>
+                            <div>
+                                <p class="font-medium text-[#7C9A6E]">变换完整</p>
+                                <p class="text-xs mt-1">置换、扩缩、增删、组分、复制</p>
+                            </div>
+                            <div class="md:col-span-2">
+                                <p class="font-medium text-[#7C9A6E]">变换对象</p>
+                                <p class="text-xs mt-1">元素、准则、论域的变换分析</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="flex flex-col md:flex-row gap-4 justify-center">
+                        <button onclick="shareResult()" class="share-btn bg-[#07C160] text-white hover:bg-[#06AD56]">
+                            <span class="flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M8.69 13.3L4.59 9.2a1.003 1.003 0 1 1 1.42-1.42L9 10.8l7.99-7.99a1.003 1.003 0 1 1 1.42 1.42l-8.7 8.69a1.003 1.003 0 0 1-1.02.18z"/>
+                                </svg>
+                                分享给好友
+                            </span>
+                        </button>
+                        <button onclick="restartTest()" class="share-btn bg-[#F5F5F5] text-[#6B6B6B] hover:bg-[#EEEEEE]">
+                            <span class="flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                重新测评
+                            </span>
+                        </button>
+                        <button onclick="showHistory()" class="share-btn bg-[#F5F5F5] text-[#6B6B6B] hover:bg-[#EEEEEE]">
+                            <span class="flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                                历史记录
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 历史记录弹窗 -->
+            <div id="history-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeHistory()"></div>
+                <div class="relative bg-white rounded-3xl p-6 md:p-8 max-w-lg w-full max-h-[80vh] overflow-y-auto">
+                    <button onclick="closeHistory()" class="absolute top-4 right-4 text-[#8B8B8B] hover:text-[#4A4A4A]">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                    <h2 class="font-display text-2xl text-[#4A4A4A] mb-6">历史记录</h2>
+                    <div id="history-list" class="space-y-4">
+                        <!-- 动态填充 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ 全局变量 ============
+        const TOTAL_TIME = 5 * 60; // 5分钟（秒）
+        const MAX_SCORE = 360;
+        let timeLeft = TOTAL_TIME;
+        let timerInterval = null;
+        let testStartTime = null;
+        let currentResult = null;
+
+        // ============ 评分相关函数 ============
+        
+        /**
+         * 核心评分算法（基于可拓学理论）
+         * - 按换行符拆分答案
+         * - 恶意/无关回答：0分
+         * - 有效回答5条及以上：70分以上
+         * - 有效回答少于5条：0-60分
+         */
+        
+        // 恶意内容关键词
+        const MALICIOUS_KEYWORDS = [
+            '傻逼', '智障', '脑残', '废物', '垃圾', '有病', '神经病',
+            '滚', '操', '草泥马', '妈逼', '去死', '白痴', '弱智',
+            'fuck', 'shit', 'damn', 'idiot', 'stupid', 'bastard'
+        ];
+
+        // 检测是否为恶意内容
+        function isMaliciousContent(text) {
+            const lowerText = text.toLowerCase();
+            return MALICIOUS_KEYWORDS.some(keyword => 
+                lowerText.includes(keyword.toLowerCase())
+            );
+        }
+
+        // 检测回答是否与题目相关（初中生数学56分家长请吃包子）
+        function isRelevantAnswer(text) {
+            // 必须包含以下任一关键词才能算相关
+            const relevantKeywords = [
+                // 核心关键词
+                '包子', '分数', '数学', '考试', '家长', '初中', '成绩',
+                '孩子', '学生', '上学', '学习', '卷子', '考', '分',
+                // 情感/行为相关
+                '高兴', '开心', '庆祝', '奖励', '鼓励', '表扬', '安慰',
+                '请吃', '吃饭', '爱吃', '喜欢', '爱', '吃',
+                // 进步/原因相关
+                '进步', '努力', '第一名', '名次', '排名', '满分', '优秀',
+                '及格', '提高了', '进步了', '超过', '比上次',
+                // 其他相关
+                '老师', '学校', '平时', '这次', '终于', '终于'
+            ];
+            const lowerText = text.toLowerCase();
+            return relevantKeywords.some(keyword => lowerText.includes(keyword));
+        }
+
+        // 语义去重：判断两条回答是否语义相同或相似
+        function isSemanticDuplicate(text1, text2) {
+            const t1 = text1.toLowerCase().trim();
+            const t2 = text2.toLowerCase().trim();
+            
+            // 1. 完全相同
+            if (t1 === t2) return true;
+            
+            // 2. 去除标点、空格后相同
+            const normalize = (s) => s.replace(/[，。！？、；：""''（）《》【】\s,\.\!\?\;\:\"\'\(\)\[\]]/g, '');
+            if (normalize(t1) === normalize(t2)) return true;
+            
+            // 3. 一条完全包含另一条（短的那条小于等于8个字）
+            if (t1.length <= 8 && t2.includes(t1)) return true;
+            if (t2.length <= 8 && t1.includes(t2)) return true;
+            
+            // 4. 提取核心词比较（扩展关键词库）
+            const coreKeywords = [
+                // 进步相关
+                '进步', '努力', '鼓励', '奖励', '表扬', '第一次', '首次',
+                // 成绩相关
+                '成绩', '分数', '考试', '数学', '最高分', '第一名', '第一名', '第一名',
+                // 家长态度相关
+                '不在意', '不要求', '没要求', '放养', '身心健康', '健康', '开心', '快乐',
+                '要求', '标准', '束缚', '灰心', '在意', '关注',
+                // 人物相关
+                '孩子', '家长', '他', '她',
+                // 食物相关
+                '包子', '喜欢', '爱吃', '麦当劳', '庆祝',
+                // 其他
+                '因为', '平时', '这次', '本次', '有史以来', '以前', '病愈', '喜事'
+            ];
+            
+            const getCoreWords = (s) => {
+                const found = [];
+                for (const kw of coreKeywords) {
+                    if (s.includes(kw)) found.push(kw);
+                }
+                return found;
+            };
+            const words1 = getCoreWords(t1);
+            const words2 = getCoreWords(t2);
+            
+            // 核心词有3个及以上相同
+            const commonWords = words1.filter(w => words2.includes(w));
+            if (commonWords.length >= 3) {
+                // 计算核心词重合度
+                const coverage = commonWords.length / Math.max(words1.length, words2.length);
+                if (coverage >= 0.6) return true;
+            }
+            
+            // 5. 专门检测"最高分/第一名"类重复（语义高度相似）
+            const highScorePatterns = [
+                ['最高分', '第一名'], ['最高分', '第一名'],
+                ['有史以来', '第一次'], ['进步', '鼓励'],
+                ['放养', '不在意'], ['不在意', '身心健康']
+            ];
+            for (const [kw1, kw2] of highScorePatterns) {
+                const has1_1 = t1.includes(kw1) && t1.includes(kw2);
+                const has1_2 = t1.includes(kw1);
+                const has2_1 = t2.includes(kw1) && t2.includes(kw2);
+                const has2_2 = t2.includes(kw1);
+                
+                if ((has1_1 && has2_1) || (has1_1 && has2_2) || (has1_2 && has2_1)) {
+                    // 两句都包含"最高分"或都包含"进步"+"鼓励"，且长度相近
+                    const lenRatio = Math.min(t1.length, t2.length) / Math.max(t1.length, t2.length);
+                    if (lenRatio > 0.5) return true;
+                }
+            }
+            
+            // 6. 相同开头+剩余内容相似
+            const shortPrefixes = ['因为', '由于'];
+            for (const prefix of shortPrefixes) {
+                if (t1.startsWith(prefix) && t2.startsWith(prefix)) {
+                    const rest1 = t1.slice(prefix.length).trim();
+                    const rest2 = t2.slice(prefix.length).trim();
+                    // 剩余部分核心词有3个以上相同
+                    const r1 = getCoreWords(rest1);
+                    const r2 = getCoreWords(rest2);
+                    const rCommon = r1.filter(w => r2.includes(w));
+                    if (rCommon.length >= 3) return true;
+                }
+            }
+            
+            return false;
+        }
+
+        // 过滤有效回答（必须是：非空、非恶意、且与题目相关）+ 语义去重
+        function filterValidAnswers(answers) {
+            const valid = [];
+            const duplicateIndices = []; // 记录哪些是重复的
+            
+            for (let i = 0; i < answers.length; i++) {
+                const answer = answers[i];
+                const trimmed = answer.trim();
+                
+                // 1. 非空检查
+                if (trimmed.length < 2) continue;
+                
+                // 2. 恶意内容检查
+                if (isMaliciousContent(trimmed)) continue;
+                
+                // 3. 相关性检查（必须包含题目相关关键词）
+                if (!isRelevantAnswer(trimmed)) continue;
+                
+                // 4. 语义去重：检查是否与已有答案重复
+                let isDuplicate = false;
+                for (const existing of valid) {
+                    if (isSemanticDuplicate(trimmed, existing)) {
+                        isDuplicate = true;
+                        break;
+                    }
+                }
+                
+                if (isDuplicate) {
+                    duplicateIndices.push(i);
+                } else {
+                    valid.push(trimmed);
+                }
+            }
+            
+            return valid;
+        }
+
+        function calculateScore(answers) {
+            // 过滤有效回答（已包含去重）
+            const validAnswers = filterValidAnswers(answers);
+            const count = validAnswers.length;
+            
+            // 如果有效回答为0，返回0分
+            if (count === 0) {
+                return 0;
+            }
+            
+            // 基于有效回答数量的评分
+            let score;
+            if (count === 1) {
+                score = 15;
+            } else if (count === 2) {
+                score = 30;
+            } else if (count === 3) {
+                score = 45;
+            } else if (count === 4) {
+                score = 60;
+            } else if (count <= 6) {
+                // 5-6个有效回答：70-82分
+                score = 70 + (count - 5) * 6;
+            } else if (count <= 8) {
+                // 7-8个有效回答：84-92分
+                score = 84 + (count - 6) * 4;
+            } else if (count <= 10) {
+                // 9-10个有效回答：94-100分
+                score = 94 + (count - 8) * 3;
+            } else {
+                // 11+个有效回答：102-110分
+                score = 102 + Math.min((count - 10) * 2, 8);
+            }
+            
+            return Math.min(Math.round(score), 110);
+        }
+
+        /**
+         * 计算五维能力得分
+         * 五维满分共360分：基元拓展72分 + 共轭8部72分 + 创新路径72分 + 变换完整72分 + 变换对象72分
+         */
+        function calculateDimensions(answers) {
+            const count = answers.length;
+            const allText = answers.join('').toLowerCase(); // 合并所有回答用于关键词匹配
+            
+            // 基元拓展（物元、事元、关系元）- 满分72分
+            const yuanSubs = {
+                '物元': ['包子', '分数', '数学', '考试', '卷子', '成绩', '排名', '名次'],
+                '事元': ['考试', '学习', '上学', '作弊', '参与', '选择', '吃', '请吃', '庆祝'],
+                '关系元': ['和', '与', '因为', '所以', '但', '而', '却']
+            };
+            let yuanScore = 0;
+            let yuanCount = 0;
+            for (const kws of Object.values(yuanSubs)) {
+                if (kws.some(k => allText.includes(k))) yuanCount++;
+            }
+            yuanScore = yuanCount * 24; // 每个子维度24分，共72分
+            
+            // 共轭8部（虚实、软硬、负正、潜显）- 满分72分
+            const conjSubs = {
+                '负正': ['负', '正', '缺点', '优点', '错', '对', '失误', '进步'],
+                '虚实': ['虚', '实', '真实', '想象', '表面', '本质', '可能'],
+                '软硬': ['软', '硬', '性格', '严格', '温柔'],
+                '潜显': ['潜', '显', '隐藏', '明显', '潜在', '未来']
+            };
+            let conjScore = 0;
+            let conjCount = 0;
+            for (const kws of Object.values(conjSubs)) {
+                if (kws.some(k => allText.includes(k))) conjCount++;
+            }
+            conjScore = conjCount * 18; // 每个子维度18分，共72分
+            
+            // 创新路径（相关、蕴含、可扩）- 满分72分
+            const innovSubs = {
+                '相关': ['和', '与', '因为', '所以', '导致', '影响', '联系'],
+                '蕴含': ['包含', '包括', '意味着', '代表', '体现'],
+                '可扩': ['更多', '扩展', '更大', '更小', '其他', '另外']
+            };
+            let innovScore = 0;
+            let innovCount = 0;
+            for (const kws of Object.values(innovSubs)) {
+                if (kws.some(k => allText.includes(k))) innovCount++;
+            }
+            innovScore = innovCount * 24; // 每个子维度24分，共72分
+            
+            // 变换方法（置换、扩缩、增删、组分、复制）- 满分72分
+            const transSubs = {
+                '置换': ['换成', '变成', '改变', '替换'],
+                '扩缩': ['扩大', '缩小', '增加', '减少', '更多', '更少'],
+                '增删': ['加上', '减去', '添加', '去掉', '多', '少'],
+                '组分': ['组合', '拆分', '分解', '搭配'],
+                '复制': ['复制', '模仿', '拷贝', '借鉴']
+            };
+            let transScore = 0;
+            let transCount = 0;
+            for (const kws of Object.values(transSubs)) {
+                if (kws.some(k => allText.includes(k))) transCount++;
+            }
+            transScore = transCount * 14; // 每个子维度14分多，约70分
+            
+            // 变换对象（元素、准则、论域）- 满分72分
+            const targetSubs = {
+                '元素': ['孩子', '家长', '父母', '学生', '老师', '包子', '分数', '数学', '考试'],
+                '准则': ['规则', '标准', '条件', '要求', '应该', '诚实'],
+                '论域': ['学校', '家庭', '社会', '班级', '全班', '全年级']
+            };
+            let targetScore = 0;
+            let targetCount = 0;
+            for (const kws of Object.values(targetSubs)) {
+                if (kws.some(k => allText.includes(k))) targetCount++;
+            }
+            targetScore = targetCount * 24; // 每个子维度24分，共72分
+            
+            // 有回答但得分为0时，给最低分
+            if (count > 0) {
+                yuanScore = yuanScore || 10;
+                conjScore = conjScore || 10;
+                innovScore = innovScore || 10;
+                transScore = transScore || 10;
+                targetScore = targetScore || 10;
+            }
+            
+            return {
+                labels: ['基元拓展', '共轭8部', '创新路径', '变换完整', '变换对象'],
+                rawScores: [yuanScore, conjScore, innovScore, transScore, targetScore], // 原始分数
+                datasets: [{
+                    label: '能力得分',
+                    data: [yuanScore, conjScore, innovScore, transScore, targetScore],
+                    backgroundColor: 'rgba(124, 154, 110, 0.2)',
+                    borderColor: 'rgba(124, 154, 110, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(124, 154, 110, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(124, 154, 110, 1)'
+                }]
+            };
+        }
+
+        /**
+         * 生成思维盲区分析
+         */
+        function generateBlindSpotAnalysis(answers, dimensions) {
+            const count = answers.length;
+            const allText = answers.join('').toLowerCase();
+            
+            // 共轭8部子维度检测
+            const conjugateMissing = [];
+            if (!['负', '正', '缺点', '优点', '错', '对'].some(k => allText.includes(k))) conjugateMissing.push('负正');
+            if (!['虚', '实', '真实', '想象', '表面', '本质'].some(k => allText.includes(k))) conjugateMissing.push('虚实');
+            if (!['软', '硬', '性格', '严格', '温柔'].some(k => allText.includes(k))) conjugateMissing.push('软硬');
+            if (!['潜', '显', '隐藏', '明显', '潜在'].some(k => allText.includes(k))) conjugateMissing.push('潜显');
+            
+            // 创新路径子维度检测
+            const innovationMissing = [];
+            if (!['和', '与', '因为', '所以', '影响', '联系'].some(k => allText.includes(k))) innovationMissing.push('相关');
+            if (!['包含', '包括', '意味着', '代表'].some(k => allText.includes(k))) innovationMissing.push('蕴含');
+            if (!['更多', '扩展', '更大', '更小'].some(k => allText.includes(k))) innovationMissing.push('可扩');
+            
+            // 变换方法子维度检测
+            const transformMissing = [];
+            if (!['换成', '变成', '改变', '替换'].some(k => allText.includes(k))) transformMissing.push('置换');
+            if (!['扩大', '缩小', '增加', '减少'].some(k => allText.includes(k))) transformMissing.push('扩缩');
+            if (!['加上', '减去', '添加', '去掉'].some(k => allText.includes(k))) transformMissing.push('增删');
+            if (!['组合', '拆分', '分解', '搭配'].some(k => allText.includes(k))) transformMissing.push('组分');
+            if (!['复制', '模仿', '拷贝', '借鉴'].some(k => allText.includes(k))) transformMissing.push('复制');
+            
+            // 变换对象子维度检测
+            const targetMissing = [];
+            if (!['孩子', '家长', '包子', '分数', '数学'].some(k => allText.includes(k))) targetMissing.push('元素');
+            if (!['规则', '标准', '条件', '要求', '应该'].some(k => allText.includes(k))) targetMissing.push('准则');
+            if (!['学校', '家庭', '社会', '班级'].some(k => allText.includes(k))) targetMissing.push('论域');
+            
+            // 统计缺失维度
+            const missingDims = [];
+            if (conjugateMissing.length > 0) missingDims.push(`共轭8部（缺${conjugateMissing.join('/')}）`);
+            if (innovationMissing.length > 0) missingDims.push(`创新路径（缺${innovationMissing.join('/')}）`);
+            if (transformMissing.length > 0) missingDims.push(`变换方法（缺${transformMissing.join('/')}）`);
+            if (targetMissing.length > 0) missingDims.push(`变换对象（缺${targetMissing.join('/')}）`);
+            
+            // 生成分析文本
+            let analysis = `<p class="mb-2">您的有效回答为 <span class="font-semibold text-[#D4A574]">${count} 条</span>，经可拓学分析：</p>`;
+            
+            if (missingDims.length === 0) {
+                analysis += `<p class="mt-3 text-[#7C9A6E]">✅ 您的思维发散能力较为均衡，五个维度均有涉及，请继续保持！</p>`;
+            } else {
+                analysis += `<p class="mt-3">⚠️ 识别出 <span class="font-semibold text-[#D4A574]">${missingDims.length} 类</span>思维盲区：</p>`;
+                analysis += `<ul class="mt-2 space-y-2">`;
+                missingDims.forEach(dim => {
+                    analysis += `<li class="flex items-start gap-2 text-sm">
+                        <span class="text-[#D4A574] mt-1">•</span>
+                        <span><strong>${dim.split('（')[0]}</strong>：${dim.split('（')[1].replace('）', '')}</span>
+                    </li>`;
+                });
+                analysis += `</ul>`;
+                analysis += `<p class="mt-3 text-sm text-[#6B6B6B]">建议：尝试从上述缺失的角度思考问题，例如从${missingDims[0].split('（')[0]}的"${missingDims[0].split('（')[1].replace('（', '').replace('）', '').split('/')[0]}"方向拓展。</p>`;
+            }
+            
+            return analysis;
+        }
+
+        /**
+         * 计算百分位排名
+         */
+        function calculatePercentile(score) {
+            // 基于预设分布计算
+            if (score >= 100) return 95;
+            if (score >= 90) return 85;
+            if (score >= 80) return 70;
+            if (score >= 70) return 50;
+            return 30;
+        }
+
+        // ============ 页面控制 ============
+        
+        function showPage(pageId) {
+            ['intro-page', 'test-page', 'result-page'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(pageId).classList.remove('hidden');
+        }
+
+        // ============ 计时器 ============
+        
+        function startTimer() {
+            testStartTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            timeLeft--;
+            
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const timerText = document.getElementById('timer-text');
+            const timerRing = document.getElementById('timer-ring');
+            
+            timerText.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            // 更新圆环进度
+            const progress = (timeLeft / TOTAL_TIME) * 100;
+            timerRing.style.setProperty('--progress', `${progress}%`);
+            
+            // 最后30秒警告
+            if (timeLeft <= 30) {
+                timerRing.classList.add('timer-warning');
+                timerText.classList.add('text-[#D4A574]');
+            }
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                submitAnswer();
+            }
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        // ============ 答题逻辑 ============
+        
+        function startTest() {
+            showPage('test-page');
+            startTimer();
+            document.getElementById('answer-input').focus();
+        }
+
+        function updateLineCount() {
+            const input = document.getElementById('answer-input').value;
+            const lines = input.split('\n').filter(line => line.trim() !== '').length;
+            document.getElementById('line-count').textContent = `已输入 ${lines} 行`;
+        }
+
+        function submitAnswer() {
+            stopTimer();
+            
+            const input = document.getElementById('answer-input').value;
+            
+            // 按换行符拆分，并过滤空行
+            const allAnswers = input.split('\n').filter(line => line.trim() !== '');
+            
+            // 计算原始回答数
+            const originalCount = allAnswers.length;
+            
+            // 过滤有效回答（已包含语义去重）
+            const validAnswers = filterValidAnswers(allAnswers);
+            const validCount = validAnswers.length;
+            const filteredCount = originalCount - validCount;
+            
+            // 计算分数
+            const score = calculateScore(validAnswers);
+            
+            // 计算五维能力
+            const dimensions = calculateDimensions(validAnswers);
+            
+            // 生成盲区分析
+            const blindSpotAnalysis = generateBlindSpotAnalysis(validAnswers, dimensions);
+            
+            // 计算百分位
+            const percentile = calculatePercentile(score);
+            
+            // 保存结果
+            currentResult = {
+                id: Date.now(),
+                score: score,
+                answers: validAnswers,
+                totalAnswers: originalCount,
+                validCount: validCount,
+                filteredCount: filteredCount,
+                dimensions: dimensions,
+                percentile: percentile,
+                blindSpotAnalysis: blindSpotAnalysis,
+                timestamp: new Date().toISOString()
+            };
+            
+            saveResult(currentResult);
+            
+            // 显示结果页
+            displayResult(currentResult);
+            showPage('result-page');
+        }
+
+        function displayResult(result) {
+            // 分数
+            document.getElementById('score-display').textContent = result.score;
+            
+            // 百分位提示
+            let percentileText = '';
+            if (result.score === 0) {
+                percentileText = '未获得有效回答（内容为空、恶意或与题目无关）';
+            } else if (result.score < 70) {
+                percentileText = '继续加油，尝试更发散地思考';
+            } else {
+                percentileText = `您超过了 ${result.percentile}% 的用户`;
+            }
+            document.getElementById('percentile-display').textContent = percentileText;
+            
+            // 有效回答数量
+            const validCount = result.validCount || result.answers.length;
+            const filteredCount = result.filteredCount || 0;
+            let validAnswerText = `有效回答：${validCount} 条`;
+            if (filteredCount > 0) {
+                validAnswerText += `（${filteredCount}条重复/无关/恶意内容已过滤）`;
+            }
+            document.getElementById('valid-answer-count').textContent = validAnswerText;
+            
+            // 思维盲区
+            document.getElementById('blind-spot-analysis').innerHTML = result.blindSpotAnalysis;
+            
+            // 维度标签
+            const tagsContainer = document.getElementById('dimension-tags');
+            tagsContainer.innerHTML = '';
+            const rawScores = result.dimensions.rawScores || result.dimensions.datasets[0].data;
+            result.dimensions.labels.forEach((label, index) => {
+                const score = rawScores[index];
+                const maxScore = 72; // 单维度最高72分
+                const tagClass = score >= 50 ? 'high' : 'low';
+                const tag = document.createElement('span');
+                tag.className = `dimension-tag ${tagClass}`;
+                tag.innerHTML = `${label} <span class="opacity-60">${score}/${maxScore}分</span>`;
+                tagsContainer.appendChild(tag);
+            });
+            
+            // 雷达图 - 满分360分
+            const ctx = document.getElementById('radar-chart').getContext('2d');
+            if (window.radarChart) {
+                window.radarChart.destroy();
+            }
+            window.radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: result.dimensions,
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 72, // 单维度最高72分（360/5=72）
+                            ticks: {
+                                stepSize: 18, // 约四分之一
+                                font: { size: 10 },
+                                callback: function(value) {
+                                    return value; // 显示实际分数
+                                }
+                            },
+                            pointLabels: {
+                                font: { size: 12 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // ============ 数据存储 ============
+        
+        function saveResult(result) {
+            let history = JSON.parse(localStorage.getItem('assessment_history') || '[]');
+            history.unshift(result);
+            // 只保留最近20条
+            history = history.slice(0, 20);
+            localStorage.setItem('assessment_history', JSON.stringify(history));
+        }
+
+        function getHistory() {
+            return JSON.parse(localStorage.getItem('assessment_history') || '[]');
+        }
+
+        function showHistory() {
+            const history = getHistory();
+            const listContainer = document.getElementById('history-list');
+            
+            if (history.length === 0) {
+                listContainer.innerHTML = '<p class="text-[#8B8B8B] text-center py-8">暂无历史记录</p>';
+            } else {
+                listContainer.innerHTML = history.map(item => {
+                    const date = new Date(item.timestamp);
+                    const dateStr = `${date.getMonth() + 1}月${date.getDate()}日 ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                    return `
+                        <div class="bg-[#F8F6F1] rounded-xl p-4 cursor-pointer hover:bg-[#F0EDE6] transition-colors" onclick="viewHistoryItem(${item.id})">
+                            <div class="flex justify-between items-center">
+                                <span class="font-semibold text-[#D4A574] text-xl">${item.score}分</span>
+                                <span class="text-[#8B8B8B] text-sm">${dateStr}</span>
+                            </div>
+                            <p class="text-[#8B8B8B] text-sm mt-1">超过 ${item.percentile}% 的用户</p>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            document.getElementById('history-modal').classList.remove('hidden');
+        }
+
+        function closeHistory() {
+            document.getElementById('history-modal').classList.add('hidden');
+        }
+
+        function viewHistoryItem(id) {
+            const history = getHistory();
+            const item = history.find(h => h.id === id);
+            if (item) {
+                closeHistory();
+                displayResult(item);
+                showPage('result-page');
+            }
+        }
+
+        function confirmExit() {
+            if (confirm('确定要退出测评吗？当前进度将不会保存。')) {
+                stopTimer();
+                showPage('intro-page');
+            }
+        }
+
+        function restartTest() {
+            // 重置状态
+            timeLeft = TOTAL_TIME;
+            document.getElementById('answer-input').value = '';
+            document.getElementById('timer-text').textContent = '05:00';
+            document.getElementById('timer-text').classList.remove('text-[#D4A574]');
+            document.getElementById('timer-ring').style.setProperty('--progress', '100%');
+            document.getElementById('timer-ring').classList.remove('timer-warning');
+            updateLineCount();
+            showPage('intro-page');
+        }
+
+        // ============ 分享功能 ============
+        
+        function shareResult() {
+            if (!currentResult) return;
+            
+            const shareText = `我在思维发散度测评中获得了 ${currentResult.score} 分，超过 ${currentResult.percentile}% 的用户！快来挑战一下：`;
+            const shareUrl = window.location.href;
+            
+            // 尝试使用 Web Share API
+            if (navigator.share) {
+                navigator.share({
+                    title: '思维发散度测评',
+                    text: shareText,
+                    url: shareUrl
+                }).catch(err => {
+                    // 如果用户取消分享，复制链接
+                    copyToClipboard(shareUrl);
+                });
+            } else {
+                // 降级：复制链接
+                copyToClipboard(shareUrl);
+                alert('链接已复制到剪贴板，快去分享给好友吧！');
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).catch(() => {
+                // 降级方案
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            });
+        }
+
+        // ============ 初始化 ============
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查URL参数，看是否是从分享链接进入
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('from_share')) {
+                // 来自分享链接，可以显示分享者的部分信息
+                const sharedScore = urlParams.get('score');
+                if (sharedScore) {
+                    // 可以提示用户有好友分享了测评
+                    console.log('来自好友分享，分数:', sharedScore);
+                }
+            }
+            
+            // 回车换行支持
+            document.getElementById('answer-input').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    const start = this.selectionStart;
+                    const end = this.selectionEnd;
+                    const value = this.value;
+                    this.value = value.substring(0, start) + '\n' + value.substring(end);
+                    this.selectionStart = this.selectionEnd = start + 1;
+                    updateLineCount();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
